@@ -13,13 +13,19 @@ script de prediction.
 # =====================================================================
 # 1. Chargement des donnees
 # =====================================================================
-from google.colab import drive
-drive.mount("/content/drive/")
-
 import pandas as pd
 import numpy as np
+import os
 
-df = pd.read_csv('/content/drive/MyDrive/Projet_IA/ExportIA.csv', sep=None, engine='python')
+
+# 1. Vérification du fichier de données
+chemin_csv = "ExportIA.csv"
+if not os.path.exists(chemin_csv):
+        print(f"\n[ERREUR] Le fichier '{chemin_csv}' est introuvable dans le dossier actuel.")
+        print("Veuillez placer le fichier CSV dans le même dossier que ce script avant de le relancer.")
+        
+
+df = pd.read_csv(chemin_csv, sep=None, engine='python')
 print(df.head())
 
 
@@ -102,7 +108,8 @@ for a in ax.flat:
     a.set_xlabel("k")
     a.grid(alpha=0.3)
 plt.tight_layout()
-plt.show()
+plt.savefig("graphes_metriques_k.png")
+plt.close()
 
 
 # ---------------------------------------------------------------------
@@ -139,7 +146,7 @@ import joblib
 final_model = KMeans(n_clusters=best_k, random_state=42, n_init=10)
 coords['cluster'] = final_model.fit_predict(X)
 
-joblib.dump(final_model, '/content/drive/MyDrive/Projet_IA/kmeans_bornes.pkl')
+joblib.dump(final_model, 'kmeans_bornes.pkl')
 print("Modele sauvegarde.")
 
 
@@ -168,7 +175,7 @@ for _, r in coords.iterrows():
     ).add_to(m)
 
 # En script .py (hors notebook), on sauvegarde la carte en HTML pour l'ouvrir
-m.save('/content/drive/MyDrive/Projet_IA/carte_clusters.html')
+m.save('carte_clusters.html')
 print("Carte sauvegardee : carte_clusters.html")
 
 
@@ -180,11 +187,10 @@ print("Carte sauvegardee : carte_clusters.html")
 # Le modele a ete entraine dans l'ordre (latitude, longitude) : on respecte le
 # meme ordre ici.
 # =====================================================================
-import joblib
-import numpy as np
+
 
 # Chargement du modele sauvegarde (une seule fois)
-model = joblib.load('/content/drive/MyDrive/Projet_IA/kmeans_bornes.pkl')
+model = joblib.load('kmeans_bornes.pkl')
 
 def predire_cluster(latitude, longitude):
     return int(model.predict(np.array([[latitude, longitude]]))[0])
