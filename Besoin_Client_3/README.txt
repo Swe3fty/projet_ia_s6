@@ -25,6 +25,7 @@ CONTENU DU DOSSIER
   preprocessor.pkl                  Pipeline de prétraitement (généré par le notebook)
   label_encoder_target.pkl          Encodeur de la variable cible (généré par le notebook)
   feature_names.pkl                 Ordre des features (généré par le notebook)
+  *.png				    Graphiques
   exportIA.csv                      Base de données utilisée
   README.txt                        Ce fichier
 
