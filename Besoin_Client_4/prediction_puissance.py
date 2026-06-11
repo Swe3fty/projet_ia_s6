@@ -39,9 +39,54 @@ imp = pd.Series(importances, index=noms).sort_values()
 imp.tail(15).plot.barh(figsize=(8, 6), title="Variables les plus importantes")
 plt.tight_layout()
 plt.savefig(os.path.join(DOSSIER, 'importances.png'), dpi=150)
-plt.show()
 plt.close()
 print("Graphique enregistre : importances.png")
+
+
+# === Graphique 2 : importance par PERMUTATION ===
+# L'importance par impurete ci-dessus favorise les variables continues (lat/long) et
+# dilue les categorielles eclatees par le one-hot. La permutation mesure la vraie utilite :
+# on melange les valeurs d'une variable et on regarde de combien le score (F1-macro) chute.
+from sklearn.inspection import permutation_importance
+
+CHEMIN_CSV = os.path.join(DOSSIER, 'ExportIA.csv')
+df = pd.read_csv(CHEMIN_CSV, sep=None, engine='python')
+df = df[(df['puissance_nominale'] > 0) & (df['puissance_nominale'] <= 400)].copy()
+
+def classe_puissance(p):
+    if p <= 7.4:
+        return '1_lente'
+    elif p <= 22:
+        return '2_acceleree'
+    elif p <= 50:
+        return '3_rapide'
+    else:
+        return '4_ultra_rapide'
+
+df['classe_puissance'] = df['puissance_nominale'].apply(classe_puissance)
+for col in bool_features:
+    df[col] = df[col].astype(str).str.lower().isin(['true', 'vrai']).astype(int)
+
+num_features = ['nbre_pdc', 'consolidated_longitude', 'consolidated_latitude']
+cat_features = ['implantation_station', 'condition_acces']
+features = num_features + bool_features + cat_features
+X = df[features]
+y = df['classe_puissance']
+
+# On evalue sur un echantillon (la permutation est couteuse)
+X_ech = X.sample(min(8000, len(X)), random_state=0)
+y_ech = y.loc[X_ech.index]
+r = permutation_importance(modele, X_ech, y_ech, n_repeats=5, random_state=42,
+                           scoring='f1_macro', n_jobs=-1)
+imp_perm = pd.Series(r.importances_mean, index=features).sort_values()
+print("\nImportance par permutation :")
+print(imp_perm.sort_values(ascending=False).round(4))
+
+imp_perm.plot.barh(figsize=(8, 6), title="Importance par permutation (chute de F1-macro)")
+plt.tight_layout()
+plt.savefig(os.path.join(DOSSIER, 'importances_permutation.png'), dpi=150)
+plt.close()
+print("Graphique enregistre : importances_permutation.png")
 
 
 # === Script de prediction (charge le modele, ne reapprend pas) ===
