@@ -6,6 +6,8 @@ Prediction de la classe de puissance d'une borne.
 import os
 import pandas as pd
 import joblib
+import json
+import argparse
 
 # Dossier du script : toutes les ressources sont chargees/enregistrees ici
 DOSSIER = os.path.dirname(os.path.abspath(__file__))
@@ -98,19 +100,34 @@ def predire_puissance(borne):
     return modele.predict(X_new)[0]
 
 
-# Exemple : une borne a Brest
-exemple = {
-    'nbre_pdc': 4,
-    'consolidated_longitude': -4.4861,
-    'consolidated_latitude': 48.3904,
-    'prise_type_ef': 'false',
-    'prise_type_2': 'true',
-    'prise_type_combo_ccs': 'true',
-    'prise_type_chademo': 'true',
-    'prise_type_autre': 'false',
-    'gratuit': 'false',
-    'station_deux_roues': 'false',
-    'implantation_station': 'Parking public',
-    'condition_acces': 'Acces libre',
-}
-print("Classe de puissance predite :", predire_puissance(exemple))
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Prédit la classe de puissance d'une ou plusieurs bornes.")
+    parser.add_argument('--json', type=str, help='Chemin vers un fichier JSON de bornes')
+    args = parser.parse_args()
+
+    if args.json:
+        # Lecture depuis le fichier JSON
+        with open(args.json, 'r', encoding='utf-8-sig') as f:
+            bornes = json.load(f)
+        if isinstance(bornes, dict):
+            bornes = [bornes]
+        for i, borne in enumerate(bornes):
+            print(f"Borne {i+1} → {predire_puissance(borne)}")
+    
+    # Exemple : une borne a Brest
+    exemple = {
+        'nbre_pdc': 4,
+        'consolidated_longitude': -4.4861,
+        'consolidated_latitude': 48.3904,
+        'prise_type_ef': 'false',
+        'prise_type_2': 'true',
+        'prise_type_combo_ccs': 'true',
+        'prise_type_chademo': 'true',
+        'prise_type_autre': 'false',
+        'gratuit': 'false',
+        'station_deux_roues': 'false',
+        'implantation_station': 'Parking public',
+        'condition_acces': 'Acces libre',
+    }
+    print("Classe de puissance predite :", predire_puissance(exemple))
